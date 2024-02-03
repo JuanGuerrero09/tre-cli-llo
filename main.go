@@ -94,7 +94,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	str := fmt.Sprintf("%d. %s", index+1, i.name)
-	strRest := fmt.Sprintf("  %s", i.store)
+	strRest := fmt.Sprintf("\t  %s", i.store)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
@@ -205,6 +205,9 @@ func main() {
 		// item{title: "Gaffer’s tape", desc: "Basically sticky fabric"},
 		// item{title: "Terrycloth", desc: "In other words, towel fabric"},
 		item{name: "Hamburguer", store: "4 guys"},
+		item{name: "Ramen", store: "Wok Restaurant"},
+		item{name: "Fries", store: "McDonald's"},
+		item{name: "Churros", store: "La churrería"},
 
 
 	}
