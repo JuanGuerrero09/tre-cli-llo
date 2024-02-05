@@ -40,6 +40,8 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
+
 	// "time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -60,6 +62,14 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
+type status int
+
+const (
+	todo status = iota
+	inProgress
+	completed
+)
+
 // type item struct {
 // 	title     string
 // 	desc      string
@@ -76,11 +86,28 @@ var (
 // func (i item) FilterValue() string { return i.title }
 
 type item struct {
-	name string
-	store string
+	title       string
+	description string
+	status      status
+	startDate   time.Time
+	dueDate     time.Time
 }
 
-func (i item) FilterValue() string { return "" }
+func (i item) FilterValue() string { return i.title }
+func (i item) Title() string       { return i.title }
+func (i item) Description() string { return i.description }
+func (i item) DueDate() string { return i.dueDate.Format("02-01-2006") }
+func (i item) Status() string {
+	switch i.status {
+	case 0:
+		return "To do"
+	case 1:
+		return "In progress"
+	case 2:
+		return "Completed"
+	}
+	return ""
+}
 
 type itemDelegate struct{}
 
@@ -93,67 +120,71 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i.name)
-	strRest := fmt.Sprintf("\t  %s", i.store)
+	str := fmt.Sprintf("%d. %s", index+1, i.title)
+	strRest := fmt.Sprintf("\t  %s", i.description)
 
 	fn := itemStyle.Render
+	fn2 := itemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
 			return selectedItemStyle.Render("> " + strings.Join(s, " "))
 		}
+		fn2 = func(s ...string) string {
+			return selectedItemStyle.Render(" " + strings.Join(s, " "))
+		}
 	}
 
 	fmt.Fprintln(w, fn(str))
-	fmt.Fprint(w, strRest)
+	fmt.Fprint(w, fn2(strRest))
 }
 
 type model struct {
-	list list.Model
+	list     list.Model
 	choice   item
 	quitting bool
+	err error
 }
 
-	func (m model) Init() tea.Cmd {
-		return nil
-	}
-	
-	func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-		switch msg := msg.(type) {
-		case tea.WindowSizeMsg:
-			m.list.SetWidth(msg.Width)
-			return m, nil
-	
-		case tea.KeyMsg:
-			switch keypress := msg.String(); keypress {
-			case "q", "ctrl+c":
-				m.quitting = true
-				return m, tea.Quit
-	
-			case "enter":
-				i, ok := m.list.SelectedItem().(item)
-				if ok {
-					m.choice.name = i.name
-					m.choice.store = i.store
-				}
-				return m, tea.Quit
+func (m *model) Init() tea.Cmd {
+	return nil
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetWidth(msg.Width)
+		return &m, nil
+
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "q", "ctrl+c":
+			m.quitting = true
+			return &m, tea.Quit
+
+		case "enter":
+			i, ok := m.list.SelectedItem().(item)
+			if ok {
+				m.choice.title = i.title
+				m.choice.description = i.description
 			}
+			return &m, tea.Quit
 		}
-	
-		var cmd tea.Cmd
-		m.list, cmd = m.list.Update(msg)
-		return m, cmd
-	}
-	
-	func (m model) View() string {
-		if m.choice.name != "" {
-			return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.\n Enjoy %s!!", m.choice.name, m.choice.store))
-		}
-		if m.quitting {
-			return quitTextStyle.Render("Not hungry? That’s cool.")
-		}
-		return "\n" + m.list.View()
 	}
 
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return &m, cmd
+}
+
+func (m model) View() string {
+	if m.choice.title != "" {
+		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.\n Enjoy %s!!", m.choice.title, m.choice.description))
+	}
+	if m.quitting {
+		return quitTextStyle.Render("Not hungry? That’s cool.")
+	}
+	return "\n" + m.list.View()
+}
 
 // func (m model) Init() tea.Cmd {
 // 	return nil
@@ -204,12 +235,10 @@ func main() {
 		// item{title: "The vernal equinox", desc: "The autumnal equinox is pretty good too"},
 		// item{title: "Gaffer’s tape", desc: "Basically sticky fabric"},
 		// item{title: "Terrycloth", desc: "In other words, towel fabric"},
-		item{name: "Hamburguer", store: "4 guys"},
-		item{name: "Ramen", store: "Wok Restaurant"},
-		item{name: "Fries", store: "McDonald's"},
-		item{name: "Churros", store: "La churrería"},
-
-
+		item{title: "Hamburguer", description: "4 guys"},
+		item{title: "Ramen", description: "Wok Restaurant"},
+		item{title: "Fries", description: "McDonald's"},
+		item{title: "Churros", description: "La churrería"},
 	}
 
 	// m := model{list: list.New(items, list.NewDefaultDelegate(), 0, 0)}
@@ -233,7 +262,7 @@ func main() {
 
 	m := model{list: l}
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(&m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
