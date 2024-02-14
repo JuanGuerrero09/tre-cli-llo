@@ -150,9 +150,15 @@ type ListCfg struct {
 	listTitle string
 }
 
-func (m *model) initList(listCfg ListCfg) {
+func (m *model) initList(listCfg ListCfg) list.Model {
 	m.list = list.New(listCfg.itemList, itemDelegate{}, listCfg.width, listCfg.height)
 	m.list.Title = listCfg.listTitle
+	// m.list.SetShowStatusBar(false)
+	// m.list.SetFilteringEnabled(false)
+	m.list.Styles.Title = titleStyle
+	m.list.Styles.PaginationStyle = paginationStyle
+	m.list.Styles.HelpStyle = helpStyle
+	return m.list
 }
 
 func main() {
@@ -164,39 +170,20 @@ func main() {
 		item{title: "Churros", description: "La churrería"},
 	}
 
-	// listConfig := ListCfg{
-	// 	width:     300,
-	// 	height:    200,
-	// 	itemList:  itemsInit,
-	// 	listTitle: "Restaurant List",
-	// }
+	listConfig := ListCfg{
+		width:     20,
+		height:    14,
+		itemList:  itemsInit,
+		listTitle: "What do you want for dinner?",
+	}
 
 	const defaultWidth = 20
 
-	// m := New()
-	// m.initList(listConfig)
-	// m.list.SetShowStatusBar(false)
-	// m.list.SetFilteringEnabled(false)
-	// m.list.Styles.Title = titleStyle
-	// m.list.Styles.PaginationStyle = paginationStyle
-	// m.list.Styles.HelpStyle = helpStyle
-	// p := tea.NewProgram(m)
-
-	// if _, err := p.Run(); err != nil {
-	// 	fmt.Println("Error running program:", err)
-	// 	os.Exit(1)
-	// }
-	l := list.New(itemsInit, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = "What do you want for dinner?"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-
-	m := model{list: l}
-
-	if _, err := tea.NewProgram(&m).Run(); err != nil {
+		
+		m := New()
+		m.initList(listConfig)
+		
+		if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
