@@ -72,7 +72,12 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	strRest := fmt.Sprintf("\t  %s", i.description)
+	
+	func DefineStatus(currentStatus status) {
+		
+	}
+
+	strRest := fmt.Sprintf("\t  %s", i.status)
 
 	fn := itemStyle.Render
 	fn2 := itemStyle.Render
@@ -164,7 +169,7 @@ func (m *model) initList(listCfg ListCfg) list.Model {
 func main() {
 
 	itemsInit := []list.Item{
-		item{title: "Hamburguer", description: "4 guys"},
+		item{title: "Doc External Coating", status: completed},
 		item{title: "Ramen", description: "Wok Restaurant"},
 		item{title: "Fries", description: "McDonald's"},
 		item{title: "Churros", description: "La churrería"},
