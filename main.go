@@ -42,8 +42,6 @@ import (
 	"strings"
 	"time"
 
-	// "time"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -96,7 +94,7 @@ type item struct {
 func (i item) FilterValue() string { return i.title }
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.description }
-func (i item) DueDate() string { return i.dueDate.Format("02-01-2006") }
+func (i item) DueDate() string     { return i.dueDate.Format("02-01-2006") }
 func (i item) Status() string {
 	switch i.status {
 	case 0:
@@ -107,6 +105,20 @@ func (i item) Status() string {
 		return "Completed"
 	}
 	return ""
+}
+
+func CreateItem(title, desc string) item {
+
+	now := time.Now()
+	yyyy, mm, dd := now.Date()
+
+	return item{
+		title:       title,
+		description: desc,
+		status:      todo,
+		startDate:   time.Now(),
+		dueDate:     time.Date(yyyy, mm, dd+1, 8, 0, 0, 0, now.Location()),
+	}
 }
 
 type itemDelegate struct{}
@@ -142,7 +154,7 @@ type model struct {
 	list     list.Model
 	choice   item
 	quitting bool
-	err error
+	err      error
 }
 
 func (m *model) Init() tea.Cmd {
